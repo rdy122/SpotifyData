@@ -1,0 +1,34 @@
+library(jsonlite)
+library(dplyr)
+library(tidyr)
+library(tidytext)
+library(wordcloud)
+
+#Requested access to spotify data (11/25/20)...stream data came in two seperate json files
+streamhist1 <- fromJSON(".../StreamingHistory0.json")
+streamhist2 <-fromJSON(".../StreamingHistory1.json")
+
+#Requested access to more spotify data a month later
+streamhist3 <- fromJSON("C:/Users/rdy12/Documents/R/spotify_dec/MyData/StreamingHistory1.json")
+streamhist3 <- streamhist3 %>% filter(endTime>="2020-11-25")
+
+#Combine into one df
+streamhist2020 <- rbind(streamhist1, streamhist2, streamhist3)
+
+#Convert date-time into eastern time
+library(lubridate)
+streamhist2020$endTime<-ymd_hm(streamhist2020$endTime)
+streamhist2020$endTime<-with_tz(streamhist2020$endTime, "America/New_York")
+
+streamhist2020 <- streamhist2020 %>% filter(endTime>="2019-11-25")
+
+#Created seperate date fields, including "minutes" from milliseconds
+streamhist2020 <- streamhist2020 %>% mutate(month=month(streamhist2020$endTime), 
+                  date=date(streamhist2020$endTime), year=year(streamhist2020$endTime), 
+                  hour=hour(streamhist2020$endTime), minutes=msPlayed/60000) %>% 
+                  complete(date = seq.Date(min(date), max(date), by="day"))
+                  
+#Indicate zero minutes were streamed on days with no data
+streamhist2020$msPlayed[is.na(streamhist2020R$msPlayed)] <- 0
+streamhist2020$minutes[is.na(streamhist2020R$minutes)] <- 0
+
