@@ -32,3 +32,16 @@ streamhist2020 <- streamhist2020 %>% mutate(month=month(streamhist2020$endTime),
 streamhist2020$msPlayed[is.na(streamhist2020R$msPlayed)] <- 0
 streamhist2020$minutes[is.na(streamhist2020R$minutes)] <- 0
 
+#Separate words, remove stop words and "feat"
+spotify_words <- streamhist2020R %>%
+  select(trackName) %>%
+  unnest_tokens(word, trackName)
+spotify_words <- spotify_words %>%
+  anti_join(stop_words)
+spotify_words <- spotify_words[spotify_words$word !="feat",]
+
+#Create word cloud
+spotify_words <- spotify_words %>% count(word, sort=TRUE)
+set.seed(1234)
+wordcloud(spotify_words$word, freq=spotify_words$n, max.words = 25, random.order=FALSE, ordered.colors=TRUE)
+
